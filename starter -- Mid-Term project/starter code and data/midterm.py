@@ -258,7 +258,7 @@ def loo_cv_sim(prefs,  sim, algo, sim_matrix):
     true_list = []
     pred_list = []
     error_list = []
-    
+    count = 0
     #Start
     for i in list(prefs.keys()):
         for out in list(sim_matrix.keys()):
@@ -284,10 +284,13 @@ def loo_cv_sim(prefs,  sim, algo, sim_matrix):
                             error_list.append(error)
                             true_list.append(prefs[i][j[1]])
                             pred_list.append(j[0])
-                            print("User: "+i+", Item: "+j[1]+ " Prediction: ", j[0]," Actual: ", prefs[i][j[1]]," Error: ", error)
+                            if len(prefs) < 20 or count % 50 == 0:
+                                print("User: "+i+", Item: "+j[1]+ " Prediction: ", j[0]," Actual: ", prefs[i][j[1]]," Error: ", error)
                             
                         except:
-                             print("User: "+i+", Item: "+j[1]+ ", No Prediction Available")
+                            if len(prefs) < 20 or count % 50 == 0:
+                                print("User: "+i+", Item: "+j[1]+ ", No Prediction Available")
+                        count+=1
     #End
     
     '''
@@ -920,12 +923,14 @@ def main():
                     ## enter new code here, or call a new function, 
                     ##    to print the sim matrix
                     ##
+                    '''
                     df = pd.DataFrame(columns=list(itemsim.keys()), index=list(itemsim.keys()))
                     for i in list(itemsim.keys()):
                         for j in itemsim[i]:
                             df[i][j[1]]=j[0]
-                    with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
-                        print(df)
+                    #with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+                    print(df)
+                    '''
                     
                 print()
                 
