@@ -146,7 +146,8 @@ def calculateSimilarUsers(prefs,n=100,similarity=sim_pearson):
         result[user]=scores
     return result
 
-def getRecommendationsSim(matrix,person,similarity=sim_pearson):
+def getRecommendationsSim(prefs,userMatch,user):
+    '''
     totals={}
     simSums={}
     for other in matrix:
@@ -175,6 +176,39 @@ def getRecommendationsSim(matrix,person,similarity=sim_pearson):
     rankings.sort()
     rankings.reverse()
     return rankings
+    '''
+    userRatings=prefs[user]
+    scores={}
+    totalSim={}
+    # Loop over users similar to this one
+    for (similarity,user2) in userMatch[user]:
+    
+            
+            # ignore scores of zero or lower
+        if similarity<=0: continue  
+    # Loop over items rated by this user
+    #(item,rating) 
+        if user2==user: continue  
+        for i in prefs[user2].keys():
+            # Ignore if this user has already rated this item
+            if i in userRatings: continue
+                
+            # Weighted sum of rating times similarity
+            scores.setdefault(i,0)
+            scores[i]+=similarity*prefs[user2][i]
+            # Sum of all the similarities
+            totalSim.setdefault(i,0)
+            totalSim[i]+=similarity
+  
+    # Divide each total score by total weighting to get an average
+
+    rankings=[(score/totalSim[item],item) for item,score in scores.items( )]    
+  
+    # Return the rankings from highest to lowest
+    rankings.sort( )
+    rankings.reverse( )
+    return rankings
+    
 def getRecommendedItems(prefs,itemMatch,user):
     '''
         Calculates recommendations for a given user 
@@ -260,37 +294,39 @@ def loo_cv_sim(prefs,  sim, algo, sim_matrix):
     error_list = []
     count = 0
     #Start
+    newPrefs = copy.deepcopy(prefs)
     for i in list(prefs.keys()):
-        for out in list(sim_matrix.keys()):
+        for out in list(prefs[i].keys()):
             sumProd = 0
             sumSim = 0
-            if out in list(prefs[i]):
-                newPrefs = copy.deepcopy(prefs)
-                del newPrefs[i][out]
-                recList = algo(newPrefs,sim_matrix,i)
-                
-                for j in recList:
-                    if j[1] == out:
-                                #real.append(prefs[i][k[1]])
-                                #suggested.append(k[0])
-                                #print("Similarity: ",k[0])
-                                #print("Rating: ",prefs[i][k[1]])
+            #if out in list(prefs[i]):
+            save = newPrefs[i][out]
+            del newPrefs[i][out]
+            recList = algo(newPrefs,sim_matrix,i)
+            newPrefs[i][out] = save
+            
+            for j in recList:
+                if j[1] == out:
+                            #real.append(prefs[i][k[1]])
+                            #suggested.append(k[0])
+                            #print("Similarity: ",k[0])
+                            #print("Rating: ",prefs[i][k[1]])
+                    
+                    try:
+                        true_list.append(prefs[i][j[1]])
+                        pred_list.append(j[0])
                         
-                        try:
-                            true_list.append(prefs[i][j[1]])
-                            pred_list.append(j[0])
-                            
-                            error = (prefs[i][j[1]]-j[0])**2
-                            error_list.append(error)
-                            true_list.append(prefs[i][j[1]])
-                            pred_list.append(j[0])
-                            if len(prefs) < 20 or count % 50 == 0:
-                                print("User: "+i+", Item: "+j[1]+ " Prediction: ", j[0]," Actual: ", prefs[i][j[1]]," Error: ", error)
-                            
-                        except:
-                            if len(prefs) < 20 or count % 50 == 0:
-                                print("User: "+i+", Item: "+j[1]+ ", No Prediction Available")
-                        count+=1
+                        error = (prefs[i][j[1]]-j[0])**2
+                        error_list.append(error)
+                        true_list.append(prefs[i][j[1]])
+                        pred_list.append(j[0])
+                        if len(prefs) < 20 or count % 50 == 0:
+                            print("User: "+i+", Item: "+j[1]+ " Prediction: ", j[0]," Actual: ", prefs[i][j[1]]," Error: ", error)
+                        
+                    except:
+                        if len(prefs) < 20 or count % 50 == 0:
+                            print("User: "+i+", Item: "+j[1]+ ", No Prediction Available")
+                    count+=1
     #End
     
     '''
@@ -936,6 +972,74 @@ def main():
                 
             else:
                 print ('Empty dictionary, R(ead) in some data!') 
+        
+        elif file_io == 'SIMU' or file_io == 'simu':
+            print()
+            if len(prefs) > 0: 
+                ready = False # sub command in progress
+                sub_cmd = input('RD(ead) distance or RP(ead) pearson or WD(rite) distance or WP(rite) pearson? ')
+                try:
+                    if sub_cmd == 'RD' or sub_cmd == 'rd':
+                        # Load the dictionary back from the pickle file.
+                        usersim = pickle.load(open( "save_usersim_distance.p", "rb" ))
+                        sim_method = 'sim_distance'
+    
+                    elif sub_cmd == 'RP' or sub_cmd == 'rp':
+                        # Load the dictionary back from the pickle file.
+                        usersim = pickle.load(open( "save_usersim_pearson.p", "rb" ))  
+                        sim_method = 'sim_pearson'
+                        
+                    elif sub_cmd == 'WD' or sub_cmd == 'wd':
+                        # transpose the U-I matrix and calc user-user similarities matrix
+                        usersim = calculateSimilarUsers(prefs,similarity=sim_distance)                     
+                        # Dump/save dictionary to a pickle file
+                        pickle.dump(usersim, open( "save_usersim_distance.p", "wb" ))
+                        sim_method = 'sim_distance'
+                        
+                    elif sub_cmd == 'WP' or sub_cmd == 'wp':
+                        # transpose the U-I matrix and calc user-user similarities matrix
+                        usersim = calculateSimilarUsers(prefs,similarity=sim_pearson)                     
+                        # Dump/save dictionary to a pickle file
+                        pickle.dump(usersim, open( "save_usersim_pearson.p", "wb" )) 
+                        sim_method = 'sim_pearson'
+                    
+                    else:
+                        print("Sim sub-command %s is invalid, try again" % sub_cmd)
+                        continue
+                    
+                    ready = True # sub command completed successfully
+                    
+                except Exception as ex:
+                    print ('Error!!', ex, '\nNeed to W(rite) a file before you can R(ead) it!'
+                           ' Enter SIMU(ilarity matrix) again and choose a Write command')
+                    print()
+                
+
+                if len(usersim) > 0 and ready == True: 
+                    # Only want to print if sub command completed successfully
+                    print ('Similarity matrix based on %s, len = %d' 
+                           % (sim_method, len(usersim)))
+                    print()
+                    ##
+                    ## enter new code here, or call a new function, 
+                    ##    to print the sim matrix
+                    ##
+                    ## print(itemsim)
+
+                    for key in usersim.keys():
+                        print(key)
+                        i = 0
+                        for value in usersim[key]:
+                            print(usersim[key][i])
+                            i += 1
+                    print()
+
+
+                print()
+                
+            else:
+                print ('Empty dictionary, R(ead) in some data!')
+        
         elif file_io == 'I' or file_io == 'i':
             print()
             try:
@@ -1013,7 +1117,7 @@ def main():
             prefs = from_file_to_dict(path, file_dir+datafile, file_dir+itemfile)
             print('Number of users: %d\nList of users [0:10]:'
             % len(prefs), list(prefs.keys())[0:10] )
-            
+        
         elif file_io == 'LCVSIM' or file_io == 'lcvsim':
             print()
             sub_cmd = input('U(ser) or I(tem) based?')
@@ -1023,15 +1127,17 @@ def main():
                 
                 if sub_cmd == 'U' or sub_cmd == 'u':
                     algo = getRecommendationsSim
+                    thissim = usersim
                 elif sub_cmd == 'I' or sub_cmd == 'i':
                     algo = getRecommendedItems 
+                    thissim = itemsim
                     
                 else: 
                     print ('Incorrect Command')
                  
                     
                     
-                if len(prefs) > 0 and itemsim !={}:             
+                if len(prefs) > 0 and thissim !={}:             
                     print('LOO_CV_SIM Evaluation')
                     
                     #change?
@@ -1052,13 +1158,13 @@ def main():
                     
                     if sim_method == 'sim_pearson': 
                         sim = sim_pearson
-                        error_list  = loo_cv_sim(prefs,  sim, algo, itemsim)
+                        error_list  = loo_cv_sim(prefs,  sim, algo, thissim)
                         print('%s , len(SE list): %d, using %s' 
     			  % (prefs_name,len(error_list), sim) )
                         print()
                     elif sim_method == 'sim_distance':
                         sim = sim_distance
-                        error_total, error_list  = loo_cv_sim(prefs, sim, algo, itemsim)
+                        error_total, error_list  = loo_cv_sim(prefs, sim, algo, thissim)
                         print('%s:, len(SE list): %d, using %s' 
     			  % ( prefs_name,  len(error_list), sim) )
                         print()
@@ -1073,72 +1179,7 @@ def main():
                 print ('Error!!', ex, '\nNeed to W(rite) a file before you can R(ead) it!'
                            ' Enter Sim(ilarity matrix) again and choose a Write command')
                 print()
-        elif file_io == 'SIMU' or file_io == 'simu':
-            print()
-            if len(prefs) > 0: 
-                ready = False # sub command in progress
-                sub_cmd = input('RD(ead) distance or RP(ead) pearson or WD(rite) distance or WP(rite) pearson? ')
-                try:
-                    if sub_cmd == 'RD' or sub_cmd == 'rd':
-                        # Load the dictionary back from the pickle file.
-                        usersim = pickle.load(open( "save_usersim_distance.p", "rb" ))
-                        sim_method = 'sim_distance'
-    
-                    elif sub_cmd == 'RP' or sub_cmd == 'rp':
-                        # Load the dictionary back from the pickle file.
-                        usersim = pickle.load(open( "save_usersim_pearson.p", "rb" ))  
-                        sim_method = 'sim_pearson'
-                        
-                    elif sub_cmd == 'WD' or sub_cmd == 'wd':
-                        # transpose the U-I matrix and calc user-user similarities matrix
-                        usersim = calculateSimilarUsers(prefs,similarity=sim_distance)                     
-                        # Dump/save dictionary to a pickle file
-                        pickle.dump(usersim, open( "save_usersim_distance.p", "wb" ))
-                        sim_method = 'sim_distance'
-                        
-                    elif sub_cmd == 'WP' or sub_cmd == 'wp':
-                        # transpose the U-I matrix and calc user-user similarities matrix
-                        usersim = calculateSimilarUsers(prefs,similarity=sim_pearson)                     
-                        # Dump/save dictionary to a pickle file
-                        pickle.dump(usersim, open( "save_usersim_pearson.p", "wb" )) 
-                        sim_method = 'sim_pearson'
-                    
-                    else:
-                        print("Sim sub-command %s is invalid, try again" % sub_cmd)
-                        continue
-                    
-                    ready = True # sub command completed successfully
-                    
-                except Exception as ex:
-                    print ('Error!!', ex, '\nNeed to W(rite) a file before you can R(ead) it!'
-                           ' Enter SIMU(ilarity matrix) again and choose a Write command')
-                    print()
-                
-
-                if len(usersim) > 0 and ready == True: 
-                    # Only want to print if sub command completed successfully
-                    print ('Similarity matrix based on %s, len = %d' 
-                           % (sim_method, len(usersim)))
-                    print()
-                    ##
-                    ## enter new code here, or call a new function, 
-                    ##    to print the sim matrix
-                    ##
-                    ## print(itemsim)
-
-                    for key in usersim.keys():
-                        print(key)
-                        i = 0
-                        for value in usersim[key]:
-                            print(usersim[key][i])
-                            i += 1
-                    print()
-
-
-                print()
-                
-            else:
-                print ('Empty dictionary, R(ead) in some data!')
+        
         elif file_io == 'RML' or file_io == 'rml':
             print()
             file_dir = 'data/ml-100k/' # path from current directory
