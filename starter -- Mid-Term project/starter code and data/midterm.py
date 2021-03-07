@@ -1093,14 +1093,14 @@ def main():
                         # transpose the U-I matrix and calc user-user similarities matrix
                         usersim = calculateSimilarUsers(prefs,similarity=sim_distance)                     
                         # Dump/save dictionary to a pickle file
-                        pickle.dump(itemsim, open( "save_usersim_distance.p", "wb" ))
+                        pickle.dump(usersim, open( "save_usersim_distance.p", "wb" ))
                         sim_method = 'sim_distance'
                         
                     elif sub_cmd == 'WP' or sub_cmd == 'wp':
                         # transpose the U-I matrix and calc user-user similarities matrix
                         usersim = calculateSimilarUsers(prefs,similarity=sim_pearson)                     
                         # Dump/save dictionary to a pickle file
-                        pickle.dump(itemsim, open( "save_usersim_pearson.p", "wb" )) 
+                        pickle.dump(usersim, open( "save_usersim_pearson.p", "wb" )) 
                         sim_method = 'sim_pearson'
                     
                     else:
