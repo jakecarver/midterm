@@ -28,7 +28,7 @@ import copy
 
 def sim_pearson(prefs,p1,p2):
     '''
-        Calculate Pearson Correlation similarity 
+        Pearson Correlation similarity 
 
         Parameters:
         -- prefs: dictionary containing user-item matrix
@@ -139,10 +139,10 @@ def calculateSimilarUsers(prefs,n=100,similarity=sim_pearson):
       # Status updates for larger datasets
         c+=1
         if c%100==0: 
-            print ("%d / %d") % (c,len(prefs))
+            print ("%d / %d" % (c,len(prefs)))
             
         # Find the most similar items to this one
-        scores=topMatches(prefs,user,similarity,n=n)
+        scores = topMatches(prefs,user,similarity,n=n)
         result[user]=scores
     return result
 
@@ -242,7 +242,7 @@ def loo_cv_sim(prefs,  sim, algo, sim_matrix):
     Leave-One_Out Evaluation: evaluates recommender system ACCURACY
      
      Parameters:
-         prefs dataset: critics, etc.
+         prefs dataset: critics, etc.sim
 	 metric: MSE, or MAE, or RMSE
 	 sim: distance, pearson, etc.
 	 algo: user-based recommender, item-based recommender, etc.
