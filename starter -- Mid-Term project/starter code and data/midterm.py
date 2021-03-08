@@ -185,7 +185,7 @@ def getRecommendationsSim(prefs,userMatch,user):
     
             
             # ignore scores of zero or lower
-        if similarity<=0: continue  
+        if similarity<=.3: continue  
     # Loop over items rated by this user
     #(item,rating) 
         if user2==user: continue  
@@ -320,13 +320,13 @@ def loo_cv_sim(prefs,  sim, algo, sim_matrix):
                         error_list.append(error)
                         true_list.append(prefs[i][j[1]])
                         pred_list.append(j[0])
-                        if len(prefs) < 20 or count % 50 == 0:
-                            print("User: "+i+", Item: "+j[1]+ " Prediction: ", j[0]," Actual: ", prefs[i][j[1]]," Error: ", error)
+                        
                         
                     except:
-                        if len(prefs) < 20 or count % 50 == 0:
-                            print("User: "+i+", Item: "+j[1]+ ", No Prediction Available")
-                    count+=1
+                        pass
+        if len(prefs) < 20 or count % 50 == 0:
+            print("User Num: ", count) 
+        count+=1
     #End
     
     '''
@@ -1164,7 +1164,7 @@ def main():
                         print()
                     elif sim_method == 'sim_distance':
                         sim = sim_distance
-                        error_total, error_list  = loo_cv_sim(prefs, sim, algo, thissim)
+                        error_list  = loo_cv_sim(prefs, sim, algo, thissim)
                         print('%s:, len(SE list): %d, using %s' 
     			  % ( prefs_name,  len(error_list), sim) )
                         print()
