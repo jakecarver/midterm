@@ -181,6 +181,7 @@ def getRecommendationsSim(prefs,userMatch,user):
     scores={}
     totalSim={}
     test = prefs
+    ncount=0
     # Loop over users similar to this one
     for (similarity,user2) in userMatch[user]:
     
@@ -192,7 +193,13 @@ def getRecommendationsSim(prefs,userMatch,user):
         
         if user == user2: 
             continue
-        div = min(min(len(set(userRatings.keys()) & set(prefs[user2].keys())), 25)/25,1)
+        '''
+        if len(set(userRatings.keys()) & set(prefs[user2].keys())) >= 5:
+            print(len(set(userRatings.keys()) & set(prefs[user2].keys())))
+            print (userRatings.keys())
+            print(prefs[user2].keys())
+        '''
+        div = min(min(len(set(userRatings.keys()) & set(prefs[user2].keys())), 1)/1,1)
         
         if div ==0: continue
         for i in prefs[user2].keys():
@@ -205,7 +212,9 @@ def getRecommendationsSim(prefs,userMatch,user):
             # Sum of all the similarities
             totalSim.setdefault(i,0)
             totalSim[i]+=newSim
-  
+        ncount+=1
+    
+    
     # Divide each total score by total weighting to get an average
 
     rankings=[(score/totalSim[item],item) for item,score in scores.items( )]    
@@ -381,7 +390,7 @@ def loo_cv_sim(prefs,  sim, algo, sim_matrix):
     print('MSE: ', mean_squared_error(true_list, pred_list))
     print('MAE: ',mean_absolute_error(true_list, pred_list))
     print("RMSE: ", mean_squared_error(true_list, pred_list, squared=False))
-    print(error_list)
+    
     return error_list
 
 
