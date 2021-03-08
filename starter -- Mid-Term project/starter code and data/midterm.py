@@ -65,7 +65,10 @@ def sim_pearson(prefs,p1,p2):
     bottom = sqrt((sum_x_sq - sum_x**2 / n) * (sum_y_sq - sum_y**2 / n))
     if bottom == 0: 
         return 0
-    return top / bottom
+    
+    sig = 25
+    weight = min(min(len(lista), sig)/sig,1)
+    return (top / bottom)/weight
     
     
  
@@ -114,8 +117,9 @@ def sim_distance(prefs,person1,person2):
             sq = pow(prefs[person1][item]-prefs[person2][item],2)
             #print (sq)
             sum_of_squares += sq
-        
-    return 1/(1+sqrt(sum_of_squares))
+    sig = 25
+    weight = min(min(len(si), sig)/sig,1)
+    return 1/(1+sqrt(sum_of_squares))/weight
 
 
 def calculateSimilarUsers(prefs,n=100,similarity=sim_pearson):
@@ -187,7 +191,7 @@ def getRecommendationsSim(prefs,userMatch,user):
     
             
             # ignore scores of zero or lower
-        if similarity<=0: continue  
+        if similarity<=.5: continue  
     # Loop over items rated by this user
     #(item,rating) 
         
@@ -199,19 +203,17 @@ def getRecommendationsSim(prefs,userMatch,user):
             print (userRatings.keys())
             print(prefs[user2].keys())
         '''
-        div = min(min(len(set(userRatings.keys()) & set(prefs[user2].keys())), 1)/1,1)
         
-        if div ==0: continue
         for i in prefs[user2].keys():
             # Ignore if this user has already rated this item
             if i in userRatings: continue
-            newSim = similarity*div
+            
             # Weighted sum of rating times similarity
             scores.setdefault(i,0)
-            scores[i]+=newSim*prefs[user2][i]
+            scores[i]+=similarity*prefs[user2][i]
             # Sum of all the similarities
             totalSim.setdefault(i,0)
-            totalSim[i]+=newSim
+            totalSim[i]+=similarity
         ncount+=1
     
     
@@ -252,7 +254,7 @@ def getRecommendedItems(prefs,itemMatch,user):
             # Ignore if this user has already rated this item
             if item2 in userRatings: continue
             # ignore scores of zero or lower
-            if similarity<=0: continue     
+            if similarity<=.5: continue     
             
             #div = min(len(set(userRatings.keys()) & set(prefs[user2].keys())), 50)/50
         
