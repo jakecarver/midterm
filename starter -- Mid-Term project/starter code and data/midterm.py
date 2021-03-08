@@ -180,25 +180,31 @@ def getRecommendationsSim(prefs,userMatch,user):
     userRatings=prefs[user]
     scores={}
     totalSim={}
+    test = prefs
     # Loop over users similar to this one
     for (similarity,user2) in userMatch[user]:
     
             
             # ignore scores of zero or lower
-        if similarity<=.3: continue  
+        if similarity<=0: continue  
     # Loop over items rated by this user
     #(item,rating) 
-        if user2==user: continue  
+        
+        if user == user2: 
+            continue
+        div = min(min(len(set(userRatings.keys()) & set(prefs[user2].keys())), 25)/25,1)
+        
+        if div ==0: continue
         for i in prefs[user2].keys():
             # Ignore if this user has already rated this item
             if i in userRatings: continue
-                
+            newSim = similarity*div
             # Weighted sum of rating times similarity
             scores.setdefault(i,0)
-            scores[i]+=similarity*prefs[user2][i]
+            scores[i]+=newSim*prefs[user2][i]
             # Sum of all the similarities
             totalSim.setdefault(i,0)
-            totalSim[i]+=similarity
+            totalSim[i]+=newSim
   
     # Divide each total score by total weighting to get an average
 
@@ -237,7 +243,10 @@ def getRecommendedItems(prefs,itemMatch,user):
             # Ignore if this user has already rated this item
             if item2 in userRatings: continue
             # ignore scores of zero or lower
-            if similarity<=0: continue            
+            if similarity<=0: continue     
+            
+            #div = min(len(set(userRatings.keys()) & set(prefs[user2].keys())), 50)/50
+        
             # Weighted sum of rating times similarity
             scores.setdefault(item2,0)
             scores[item2]+=similarity*rating
@@ -313,17 +322,15 @@ def loo_cv_sim(prefs,  sim, algo, sim_matrix):
                             #print("Rating: ",prefs[i][k[1]])
                     
                     try:
-                        true_list.append(prefs[i][j[1]])
-                        pred_list.append(j[0])
                         
                         error = (prefs[i][j[1]]-j[0])**2
                         error_list.append(error)
                         true_list.append(prefs[i][j[1]])
                         pred_list.append(j[0])
-                        
+                        break
                         
                     except:
-                        pass
+                        break
         if len(prefs) < 20 or count % 50 == 0:
             print("User Num: ", count) 
         count+=1
@@ -374,7 +381,7 @@ def loo_cv_sim(prefs,  sim, algo, sim_matrix):
     print('MSE: ', mean_squared_error(true_list, pred_list))
     print('MAE: ',mean_absolute_error(true_list, pred_list))
     print("RMSE: ", mean_squared_error(true_list, pred_list, squared=False))
-    
+    print(error_list)
     return error_list
 
 
