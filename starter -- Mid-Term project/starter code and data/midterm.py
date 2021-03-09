@@ -66,7 +66,7 @@ def sim_pearson(prefs,p1,p2):
     if bottom == 0: 
         return 0
     
-    sig = 25
+    sig = 1
     weight = min(min(len(lista), sig)/sig,1)
     return (top / bottom)/weight
     
@@ -117,9 +117,9 @@ def sim_distance(prefs,person1,person2):
             sq = pow(prefs[person1][item]-prefs[person2][item],2)
             #print (sq)
             sum_of_squares += sq
-    sig = 25
+    sig = 50
     weight = min(min(len(si), sig)/sig,1)
-    return 1/(1+sqrt(sum_of_squares))/weight
+    return (1/(1+sqrt(sum_of_squares)))/weight
 
 
 def calculateSimilarUsers(prefs,n=100,similarity=sim_pearson):
@@ -191,13 +191,13 @@ def getRecommendationsSim(prefs,userMatch,user):
     
             
             # ignore scores of zero or lower
-        if similarity<=.5: continue  
+        if similarity<=.3: continue  
     # Loop over items rated by this user
     #(item,rating) 
-        
+        '''
         if user == user2: 
             continue
-        '''
+        
         if len(set(userRatings.keys()) & set(prefs[user2].keys())) >= 5:
             print(len(set(userRatings.keys()) & set(prefs[user2].keys())))
             print (userRatings.keys())
@@ -254,7 +254,7 @@ def getRecommendedItems(prefs,itemMatch,user):
             # Ignore if this user has already rated this item
             if item2 in userRatings: continue
             # ignore scores of zero or lower
-            if similarity<=.5: continue     
+            if similarity<=0: continue     
             
             #div = min(len(set(userRatings.keys()) & set(prefs[user2].keys())), 50)/50
         
@@ -315,7 +315,9 @@ def loo_cv_sim(prefs,  sim, algo, sim_matrix):
     count = 0
     #Start
     newPrefs = copy.deepcopy(prefs)
+    checkCount=0
     for i in list(prefs.keys()):
+        checker = False
         for out in list(prefs[i].keys()):
             sumProd = 0
             sumSim = 0
@@ -338,6 +340,7 @@ def loo_cv_sim(prefs,  sim, algo, sim_matrix):
                         error_list.append(error)
                         true_list.append(prefs[i][j[1]])
                         pred_list.append(j[0])
+                        checker=True
                         break
                         
                     except:
@@ -345,6 +348,8 @@ def loo_cv_sim(prefs,  sim, algo, sim_matrix):
         if len(prefs) < 20 or count % 50 == 0:
             print("User Num: ", count) 
         count+=1
+        if checker is True:
+            checkCount+=1
     #End
     
     '''
@@ -392,7 +397,8 @@ def loo_cv_sim(prefs,  sim, algo, sim_matrix):
     print('MSE: ', mean_squared_error(true_list, pred_list))
     print('MAE: ',mean_absolute_error(true_list, pred_list))
     print("RMSE: ", mean_squared_error(true_list, pred_list, squared=False))
-    
+    print("Coverage: ", len(error_list))
+    print("Coverage PCT: ", len(error_list)/100000)
     return error_list
 
 
